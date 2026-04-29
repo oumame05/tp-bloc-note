@@ -282,7 +282,7 @@ class _HomePageProviderState extends State<HomePageProvider> {
                         left: BorderSide(
                           // Bordure gauche colorée selon la note
                           color: Color(
-                            int.parse(note.couleur.substring(1, 7), radix: 16),
+                            int.parse('FF${note.couleur.substring(1)}', radix: 16),
                           ),
                           width: 6, // Épaisseur de la bordure
                         ),

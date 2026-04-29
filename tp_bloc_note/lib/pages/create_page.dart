@@ -178,7 +178,7 @@ class _CreateNotePageState extends State<CreateNotePage> {
                     decoration: BoxDecoration(
                       // Convertit la chaîne hexadécimale en couleur
                       color: Color(
-                        int.parse(couleur.substring(1, 7), radix: 16),
+                        int.parse('FF${couleur.substring(1)}', radix: 16),
                       ),
                       shape: BoxShape.circle, // Forme circulaire
                       // Bordure plus épaisse si sélectionnée

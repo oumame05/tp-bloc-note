@@ -27,7 +27,7 @@ class DetailPage extends StatelessWidget {
         // Couleur de fond de l'AppBar = couleur de la note
         backgroundColor: Color(
           // Convertit la chaîne hexadécimale en couleur (ex: #FFE082 -> Color)
-          int.parse(note.couleur.substring(1, 7), radix: 16),
+          int.parse('FF${note.couleur.substring(1)}', radix: 16),
         ),
         // Liste des actions dans l'AppBar (icônes à droite)
         actions: [
