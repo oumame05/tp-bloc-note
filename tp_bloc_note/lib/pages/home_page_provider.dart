@@ -1,5 +1,7 @@
 // Importe le package Flutter pour les composants d'interface Material Design
 import 'package:flutter/material.dart';
+import 'dart:async'; // Pour StreamSubscription
+import 'package:connectivity_plus/connectivity_plus.dart'; // Pour écouter le réseau en direct
 
 // Importe le package provider pour la gestion d'état
 import 'package:provider/provider.dart';
@@ -16,6 +18,12 @@ import 'create_page.dart';
 // Importe la page de détail d'une note
 import 'detail_page.dart';
 
+// Importe la page des notes de l'API
+import 'api_notes_page.dart';
+
+// Importe l'utilitaire de connectivité
+import '../utils/connectivity.dart';
+
 // Déclare une page avec état utilisant Provider pour la gestion d'état
 class HomePageProvider extends StatefulWidget {
   // Constructeur par défaut
@@ -30,6 +38,54 @@ class HomePageProvider extends StatefulWidget {
 class _HomePageProviderState extends State<HomePageProvider> {
   // Stocke la requête de recherche tapée par l'utilisateur
   String _query = '';
+
+  // État de la connexion (vrai par défaut en attendant la vérification)
+  bool _isConnected = true;
+  
+  // Abonnement pour écouter les changements de connexion en direct
+  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkConnectivity(); // Vérification initiale
+
+    // Abonnement aux changements d'état du réseau
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      bool isNowConnected = true;
+      // Logique similaire à notre isConnected() utilitaire
+      if (results.contains(ConnectivityResult.none) && results.length == 1) {
+        isNowConnected = false;
+      } else if (results.isEmpty || results.first == ConnectivityResult.none) {
+        isNowConnected = false;
+      }
+      
+      // Met à jour l'interface seulement si l'état a changé
+      if (mounted && _isConnected != isNowConnected) {
+        setState(() {
+          _isConnected = isNowConnected;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Il est très important d'annuler l'abonnement quand la page est détruite
+    // pour éviter les fuites de mémoire (memory leaks)
+    _connectivitySubscription.cancel();
+    super.dispose();
+  }
+
+  // Vérifie la connexion internet et met à jour l'interface
+  Future<void> _checkConnectivity() async {
+    final connected = await isConnected();
+    if (mounted) {
+      setState(() {
+        _isConnected = connected;
+      });
+    }
+  }
 
   // Méthode de construction de l'interface utilisateur
   @override
@@ -48,6 +104,36 @@ class _HomePageProviderState extends State<HomePageProvider> {
         centerTitle: true, // Centrer le titre
         // Actions dans l'AppBar (icônes à droite)
         actions: [
+          // Icône d'état de la connexion réseau
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Icon(
+              _isConnected ? Icons.wifi : Icons.wifi_off,
+              color: _isConnected ? Colors.green : Colors.red,
+            ),
+          ),
+          
+          // Bouton pour accéder à la page API (synchronisation)
+          IconButton(
+            icon: const Icon(Icons.cloud),
+            onPressed: () {
+              if (_isConnected) {
+                // Si connecté, on navigue vers la page API
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ApiNotesPage()),
+                );
+              } else {
+                // Si hors ligne, on affiche un message d'erreur
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Pas de connexion — mode hors ligne'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
+            },
+          ),
           // Compteur de notes avec Consumer (reconstruction ciblée uniquement sur ce widget)
           Consumer<NoteService>(
             builder: (context, service, child) {
