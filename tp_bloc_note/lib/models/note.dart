@@ -53,6 +53,32 @@ class Note {
     );
   }
 
+  // Convertit une Note en Map (JSON) pour le stockage local
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'titre': titre,
+      'contenu': contenu,
+      'couleur': couleur,
+      'dateCreation': dateCreation.toIso8601String(),
+      'dateModification': dateModification?.toIso8601String(),
+    };
+  }
+
+  // Reconstruit une Note depuis une Map (JSON)
+  factory Note.fromJson(Map<String, dynamic> json) {
+    return Note(
+      id: json['id'] as String,
+      titre: json['titre'] as String,
+      contenu: json['contenu'] as String,
+      couleur: json['couleur'] as String,
+      dateCreation: DateTime.parse(json['dateCreation'] as String),
+      dateModification: json['dateModification'] != null
+          ? DateTime.parse(json['dateModification'] as String)
+          : null,
+    );
+  }
+
   // Getter pour la date formatée en français
   String get dateFormatee {
     final formatter = DateFormat('d MMMM yyyy à HH:mm', 'fr_FR');
