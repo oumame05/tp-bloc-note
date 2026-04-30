@@ -51,12 +51,9 @@ class _ApiNotesPageState extends State<ApiNotesPage> {
 
   // POST — Affiche un formulaire et crée une note via JSONPlaceholder
   Future<void> _showCreateDialog() async {
-    final titreController = TextEditingController();
-    final contenuController = TextEditingController();
-
-    // Sauvegarde le ScaffoldMessenger AVANT le dialog
-    // pour éviter l'erreur de contexte après fermeture du dialog
     final scaffoldMessenger = ScaffoldMessenger.of(context);
+    String titre = '';
+    String contenu = '';
 
     await showDialog(
       context: context,
@@ -65,57 +62,51 @@ class _ApiNotesPageState extends State<ApiNotesPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Champ titre obligatoire
+            // Champ titre — sauvegarde le texte directement dans une variable
             TextField(
-              controller: titreController,
               decoration: const InputDecoration(
                 labelText: 'Titre *',
                 border: OutlineInputBorder(),
               ),
               autofocus: true,
+              onChanged: (value) => titre = value,
             ),
             const SizedBox(height: 12),
-            // Champ contenu optionnel
+            // Champ contenu
             TextField(
-              controller: contenuController,
               decoration: const InputDecoration(
                 labelText: 'Contenu',
                 border: OutlineInputBorder(),
               ),
               minLines: 3,
               maxLines: 5,
+              onChanged: (value) => contenu = value,
             ),
           ],
         ),
         actions: [
-          // Annuler — ferme le dialog sans rien faire
+          // Annuler
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Annuler'),
           ),
-          // Créer — envoie la note via POST
+          // Créer
           ElevatedButton(
             onPressed: () async {
-              // Validation : titre ne doit pas être vide
-              if (titreController.text.trim().isEmpty) return;
+              if (titre.trim().isEmpty) return;
 
-              // Crée l'objet Note avec un ID unique (timestamp)
               final note = Note.nouvelle(
-                titre: titreController.text.trim(),
-                contenu: contenuController.text.trim(),
+                titre: titre.trim(),
+                contenu: contenu.trim(),
                 couleur: '#FFE082',
               );
 
-              // Ferme le dialog AVANT l'appel API
               Navigator.pop(dialogContext);
 
-              // Envoie la note au serveur via POST
               final success = await _apiService.createNote(note);
 
-              // Si le widget est encore actif, met à jour l'interface
               if (mounted) {
                 if (success) {
-                  // Ajoute la note en tête de liste localement
                   setState(() {
                     _notes.insert(0, note);
                   });
@@ -140,10 +131,6 @@ class _ApiNotesPageState extends State<ApiNotesPage> {
         ],
       ),
     );
-
-    // Libère les contrôleurs pour éviter les fuites mémoire
-    titreController.dispose();
-    contenuController.dispose();
   }
 
   @override
